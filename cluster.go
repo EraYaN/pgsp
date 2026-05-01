@@ -8,7 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/noborus/pgsp/str"
-	"github.com/noborus/pgsp/vertical"
 
 	"github.com/olekukonko/tablewriter"
 )
@@ -84,16 +83,6 @@ func (v Cluster) Table() string {
 	t.Header(ClusterColumns)
 	t.Append(value)
 	t.Render()
-
-	return buff.String()
-}
-
-func (v Cluster) Vertical() string {
-	buff := new(bytes.Buffer)
-	vt := vertical.NewWriter(buff)
-	vt.SetHeader(ClusterColumns)
-	vt.AppendStruct(v)
-	vt.Render()
 
 	return buff.String()
 }

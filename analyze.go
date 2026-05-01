@@ -8,7 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/noborus/pgsp/str"
-	"github.com/noborus/pgsp/vertical"
 
 	"github.com/olekukonko/tablewriter"
 )
@@ -82,24 +81,10 @@ func (v Analyze) Table() string {
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)
-	t.Header(AnalyzeColumns[0:7])
-	t.Append(value[0:7])
+	t.Header(AnalyzeColumns)
+	t.Append(value)
 	t.Render()
 
-	t2 := tablewriter.NewWriter(buff)
-	t2.Header(AnalyzeColumns[7:])
-	t2.Append(value[7:])
-	t2.Render()
-
-	return buff.String()
-}
-
-func (v Analyze) Vertical() string {
-	buff := new(bytes.Buffer)
-	vt := vertical.NewWriter(buff)
-	vt.SetHeader(AnalyzeColumns)
-	vt.AppendStruct(v)
-	vt.Render()
 	return buff.String()
 }
 

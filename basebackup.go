@@ -9,7 +9,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/noborus/pgsp/str"
-	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -76,16 +75,6 @@ func (v BaseBackup) Table() string {
 	t.Header(BaseBackupColumns)
 	t.Append(str.ToStrStruct(v))
 	t.Render()
-
-	return buff.String()
-}
-
-func (v BaseBackup) Vertical() string {
-	buff := new(bytes.Buffer)
-	vt := vertical.NewWriter(buff)
-	vt.SetHeader(BaseBackupColumns)
-	vt.AppendStruct(v)
-	vt.Render()
 
 	return buff.String()
 }

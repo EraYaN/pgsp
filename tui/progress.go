@@ -14,11 +14,9 @@ import (
 )
 
 var (
-	UpdateInterval    time.Duration
-	AfterCompletion   time.Duration
-	RightMargin       int = 2
-	MinimumTableWidth int = 120
-	MaxVerticalRows   int = 15
+	UpdateInterval  time.Duration
+	AfterCompletion time.Duration
+	RightMargin     int = 1
 )
 
 var Debug = false
@@ -216,11 +214,7 @@ func (m *Model) progressView() string {
 			continue
 		}
 		s += headerStyle.Render(pgrs.v.Name()) + "\n"
-		if m.width >= MinimumTableWidth {
-			s += pgrs.v.Table()
-		} else if num*MaxVerticalRows < m.height {
-			s += pgrs.v.Vertical()
-		}
+		s += pgrs.v.Table()
 		p := pgrs.v.Progress()
 		if p > 0 && p <= 1 {
 			if time.Since(pgrs.time) > time.Second*1 {

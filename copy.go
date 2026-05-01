@@ -8,7 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/noborus/pgsp/str"
-	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -78,23 +77,9 @@ func (v Copy) Table() string {
 	value := str.ToStrStruct(v)
 	buff := new(bytes.Buffer)
 	t := tablewriter.NewWriter(buff)
-	t.Header(CopyColumns[0:7])
-	t.Append(value[0:7])
+	t.Header(CopyColumns)
+	t.Append(value)
 	t.Render()
-
-	t2 := tablewriter.NewWriter(buff)
-	t2.Header(CopyColumns[7:])
-	t2.Append(value[7:])
-	t2.Render()
-	return buff.String()
-}
-
-func (v Copy) Vertical() string {
-	buff := new(bytes.Buffer)
-	vt := vertical.NewWriter(buff)
-	vt.SetHeader(CopyColumns)
-	vt.AppendStruct(v)
-	vt.Render()
 	return buff.String()
 }
 

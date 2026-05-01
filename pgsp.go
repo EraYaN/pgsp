@@ -40,7 +40,6 @@ type Progress interface {
 	Pid() int
 	Color() (color.Color, color.Color)
 	Table() string
-	Vertical() string
 	Progress() float64
 }
 
