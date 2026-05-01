@@ -23,6 +23,7 @@ type Copy struct {
 	BYTESTotal      int64  `db:"bytes_total"`
 	TUPLESProcessed int64  `db:"tuples_processed"`
 	TUPLESExcluded  int64  `db:"tuples_excluded"`
+	TUPLESSkipped   int64  `db:"tuples_skipped"`
 }
 
 var (
@@ -76,12 +77,12 @@ func (v Copy) Table() string {
 	value := str.ToStrStruct(v)
 	buff := new(bytes.Buffer)
 	t := tablewriter.NewWriter(buff)
-	t.SetHeader(CopyColumns[0:7])
+	t.Header(CopyColumns[0:7])
 	t.Append(value[0:7])
 	t.Render()
 
 	t2 := tablewriter.NewWriter(buff)
-	t2.SetHeader(CopyColumns[7:])
+	t2.Header(CopyColumns[7:])
 	t2.Append(value[7:])
 	t2.Render()
 	return buff.String()

@@ -72,7 +72,7 @@ func (v BaseBackup) Color() (string, string) {
 func (v BaseBackup) Table() string {
 	buff := new(bytes.Buffer)
 	t := tablewriter.NewWriter(buff)
-	t.SetHeader(BaseBackupColumns)
+	t.Header(BaseBackupColumns)
 	t.Append(str.ToStrStruct(v))
 	t.Render()
 

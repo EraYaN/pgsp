@@ -186,7 +186,7 @@ func (m Model) addProgress(pgrss []pgrs, v pgsp.Progress) []pgrs {
 		}
 	}
 
-	pg := progress.NewModel(
+	pg := progress.New(
 		progress.WithScaledGradient(v.Color()),
 		progress.WithWidth(m.width-RightMargin),
 	)

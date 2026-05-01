@@ -84,12 +84,12 @@ func (v CreateIndex) Table() string {
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)
-	t.SetHeader(CreateIndexColumns[0:9])
+	t.Header(CreateIndexColumns[0:9])
 	t.Append(value[0:9])
 	t.Render()
 
 	t2 := tablewriter.NewWriter(buff)
-	t2.SetHeader(CreateIndexColumns[9:])
+	t2.Header(CreateIndexColumns[9:])
 	t2.Append(value[9:])
 	t2.Render()
 

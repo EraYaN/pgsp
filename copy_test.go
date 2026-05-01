@@ -16,6 +16,7 @@ func TestCopy_Vertical(t *testing.T) {
 		BYTESTotal      int64
 		TUPLESProcessed int64
 		TUPLESExcluded  int64
+		TUPLESSkipped   int64
 	}
 	tests := []struct {
 		name   string
@@ -35,6 +36,7 @@ func TestCopy_Vertical(t *testing.T) {
 				BYTESTotal:      10,
 				TUPLESProcessed: 1,
 				TUPLESExcluded:  10,
+				TUPLESSkipped:   1,
 			},
 			want: ` pid              | 1
  datid            | 1
@@ -46,6 +48,7 @@ func TestCopy_Vertical(t *testing.T) {
  bytes_total      | 10
  tuples_processed | 1
  tuples_excluded  | 10
+ tuples_skipped   | 1
 `,
 		},
 	}
@@ -62,6 +65,7 @@ func TestCopy_Vertical(t *testing.T) {
 				BYTESTotal:      tt.fields.BYTESTotal,
 				TUPLESProcessed: tt.fields.TUPLESProcessed,
 				TUPLESExcluded:  tt.fields.TUPLESExcluded,
+				TUPLESSkipped:   tt.fields.TUPLESSkipped,
 			}
 			CopyColumns = getColumns(Copy{})
 			if got := v.Vertical(); got != tt.want {
