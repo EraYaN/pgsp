@@ -3,6 +3,7 @@ package pgsp
 import (
 	"bytes"
 	"context"
+	"image/color"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -75,8 +76,8 @@ func (v CreateIndex) Pid() int {
 	return v.PID
 }
 
-func (v CreateIndex) Color() (string, string) {
-	return "#EE6FF8", "#5A56E0"
+func (v CreateIndex) Color() (color.Color, color.Color) {
+	return color.RGBA{R: 238, G: 111, B: 248}, color.RGBA{R: 90, G: 86, B: 224}
 }
 
 func (v CreateIndex) Table() string {

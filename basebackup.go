@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"image/color"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -65,8 +66,8 @@ func (v BaseBackup) Pid() int {
 	return v.PID
 }
 
-func (v BaseBackup) Color() (string, string) {
-	return "#FDFF8C", "#FF7CCB"
+func (v BaseBackup) Color() (color.Color, color.Color) {
+	return color.RGBA{R: 253, G: 255, B: 140}, color.RGBA{R: 255, G: 124, B: 203}
 }
 
 func (v BaseBackup) Table() string {

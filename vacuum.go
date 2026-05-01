@@ -3,6 +3,7 @@ package pgsp
 import (
 	"bytes"
 	"context"
+	"image/color"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -73,8 +74,8 @@ func (v Vacuum) Pid() int {
 	return v.PID
 }
 
-func (v Vacuum) Color() (string, string) {
-	return "#5A56E0", "#FF7CCB"
+func (v Vacuum) Color() (color.Color, color.Color) {
+	return color.RGBA{R: 90, G: 86, B: 224}, color.RGBA{R: 255, G: 124, B: 203}
 }
 
 func (v Vacuum) Table() string {

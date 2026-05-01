@@ -3,6 +3,7 @@ package pgsp
 import (
 	"bytes"
 	"context"
+	"image/color"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -71,8 +72,8 @@ func (v Cluster) Pid() int {
 	return v.PID
 }
 
-func (v Cluster) Color() (string, string) {
-	return "#5A56E0", "#EE6FF8"
+func (v Cluster) Color() (color.Color, color.Color) {
+	return color.RGBA{R: 90, G: 86, B: 224}, color.RGBA{R: 238, G: 111, B: 248}
 }
 
 func (v Cluster) Table() string {

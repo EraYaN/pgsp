@@ -3,6 +3,7 @@ package pgsp
 import (
 	"bytes"
 	"context"
+	"image/color"
 	"reflect"
 	"sort"
 	"strings"
@@ -37,7 +38,7 @@ type Pgsp struct {
 type Progress interface {
 	Name() string
 	Pid() int
-	Color() (string, string)
+	Color() (color.Color, color.Color)
 	Table() string
 	Vertical() string
 	Progress() float64
