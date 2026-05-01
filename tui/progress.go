@@ -16,7 +16,7 @@ import (
 var (
 	UpdateInterval    time.Duration
 	AfterCompletion   time.Duration
-	RightMargin       int = 10
+	RightMargin       int = 2
 	MinimumTableWidth int = 120
 	MaxVerticalRows   int = 15
 )
@@ -115,16 +115,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
-		if k := msg.String(); k == "ctrl+c" || k == "q" || k == "esc" {
+		k := msg.Key().Code
+		mod := msg.Key().Mod
+		if (k == 'c' && mod == tea.ModCtrl) || k == tea.KeyEsc || k == 'q' {
 			return m, tea.Quit
-		}
-		if k := msg.Key().Code; k == tea.KeyDown && m.ready {
-			DebugLogf("ScrollDown: %d, YPosition: %d, TotalLineCount: %d, VisibleLineCount: %d", m.viewport.YOffset(), m.viewport.YPosition, m.viewport.TotalLineCount(), m.viewport.VisibleLineCount())
+		} else if k == tea.KeyDown && m.ready {
 			m.viewport.ScrollDown(4)
-		}
-		if k := msg.Key().Code; k == tea.KeyUp && m.ready {
-			DebugLogf("ScrollUp: %d, YPosition: %d, TotalLineCount: %d, VisibleLineCount: %d", m.viewport.YOffset(), m.viewport.YPosition, m.viewport.TotalLineCount(), m.viewport.VisibleLineCount())
+		} else if k == tea.KeyUp && m.ready {
 			m.viewport.ScrollUp(4)
+		} else if k == tea.KeyLeft && m.ready {
+			m.viewport.ScrollLeft(4)
+		} else if k == tea.KeyRight && m.ready {
+			m.viewport.ScrollRight(4)
 		}
 
 	case tea.WindowSizeMsg:
