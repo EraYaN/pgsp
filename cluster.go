@@ -1,15 +1,12 @@
 package pgsp
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"image/color"
+	"text/template"
 
-	"github.com/EraYaN/pgsp/str"
 	_ "github.com/lib/pq"
-
-	"github.com/olekukonko/tablewriter"
 )
 
 // pg_stat_progress_cluster.
@@ -99,16 +96,9 @@ func (v Cluster) Color() (color.Color, color.Color) {
 	return color.RGBA{R: 90, G: 86, B: 224}, color.RGBA{R: 238, G: 111, B: 248}
 }
 
-func (v Cluster) Display() string {
-	value := str.ToStrStruct(v)
-	buff := new(bytes.Buffer)
+func (v Cluster) Template() *template.Template {
 
-	t := tablewriter.NewWriter(buff)
-	t.Header(ClusterHeaders)
-	t.Append(value)
-	t.Render()
-
-	return buff.String()
+	return ClusterTemplate
 }
 
 func (v Cluster) Progress() float64 {

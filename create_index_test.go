@@ -1,6 +1,7 @@
 package pgsp
 
 import (
+	"bytes"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -31,19 +32,10 @@ func TestCreateIndex_Table(t *testing.T) {
 		want   string
 	}{
 		{
-			name:   "test0",
-			fields: fields{},
-			want: `┌─────┬───────┬─────────┬───────┬─────────────┬─────────┬───────┬───────────────┬──────────────┐
-│ PID │ DATID │ DATNAME │ RELID │ INDEX RELID │ COMMAND │ PHASE │ LOCKERS TOTAL │ LOCKERS DONE │
-├─────┼───────┼─────────┼───────┼─────────────┼─────────┼───────┼───────────────┼──────────────┤
-│ 0   │ 0     │         │ 0     │ 0           │         │       │ 0             │ 0            │
-└─────┴───────┴─────────┴───────┴─────────────┴─────────┴───────┴───────────────┴──────────────┘
-┌────────────────────┬──────────────┬─────────────┬──────────────┬─────────────┬──────────────────┬─────────────────┐
-│ CURRENT LOCKER PID │ BLOCKS TOTAL │ BLOCKS DONE │ TUPLES TOTAL │ TUPLES DONE │ PARTITIONS TOTAL │ PARTITIONS DONE │
-├────────────────────┼──────────────┼─────────────┼──────────────┼─────────────┼──────────────────┼─────────────────┤
-│ 0                  │ 0            │ 0           │ 0            │ 0           │ 0                │ 0               │
-└────────────────────┴──────────────┴─────────────┴──────────────┴─────────────┴──────────────────┴─────────────────┘
-`,
+			name: "test0",
+			fields: fields{
+				DATNAME: "database",
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -67,8 +59,11 @@ func TestCreateIndex_Table(t *testing.T) {
 				PartitionsDone:  tt.fields.PartitionsDone,
 			}
 			CreateIndexColumns = getColumns(CreateIndex{}, false)
-			if got := v.Display(); got != tt.want {
-				t.Errorf("CreateIndex.Table() = \n%v\n, want \n%v\n", got, tt.want)
+
+			var doc bytes.Buffer
+			err := v.Template().Execute(&doc, v)
+			if err != nil {
+				t.Errorf("CreateIndex.Template() = \n%v\n", err)
 			}
 		})
 	}

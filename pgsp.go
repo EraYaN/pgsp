@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -56,24 +57,23 @@ type Progress interface {
 	Header() string
 	Pid() int
 	Color() (color.Color, color.Color)
-	Display() string
+	Template() *template.Template
 	Progress() float64
 }
 
-func New(dsn string, resolveNames bool) (*Pgsp, error) {
+func New(dsn string) (*Pgsp, error) {
 	db, err := Connect(dsn)
 	if err != nil {
 		return nil, err
 	}
 	var baseConfig *pq.Config
-	if resolveNames {
-		config, err := pq.NewConfig(dsn)
-		if err != nil {
-			return nil, err
-		}
-		config.Database = "postgres"
-		baseConfig = &config
+
+	config, err := pq.NewConfig(dsn)
+	if err != nil {
+		return nil, err
 	}
+	config.Database = "postgres"
+	baseConfig = &config
 
 	monitor := NewMonitor()
 	return &Pgsp{
@@ -127,7 +127,6 @@ func getDSN(config *pq.Config) string {
 		}
 
 		valueStr := ""
-		log.Printf("%s Value %v -> '%s'\n", j, value, valueStr)
 		valueTime, ok := value.(time.Duration)
 		if ok && valueTime.Seconds() < 0.0001 {
 			valueStr = "0"
@@ -139,7 +138,6 @@ func getDSN(config *pq.Config) string {
 		}
 		dsn += fmt.Sprintf("%s='%s' ", j, valueStr)
 	}
-	log.Printf("DSN: %s\n", dsn)
 	return dsn
 }
 
@@ -180,8 +178,11 @@ func (p *Pgsp) GetItemName(oidAvailable OidAvailable) (string, error) {
 		return "", fmt.Errorf("base config is not set")
 	}
 	key := oidAvailable.Key()
-	if name, ok := p.MetaNames[key]; ok {
+	if name, ok := p.MetaNames[key]; ok && name != "" && name != "<pending>" {
 		return name, nil
+	}
+	if oidAvailable.RELID == 0 {
+		return "", nil
 	}
 	db, err := p.ConnectForDatabase(oidAvailable.DATNAME)
 	if err != nil {
@@ -190,7 +191,8 @@ func (p *Pgsp) GetItemName(oidAvailable OidAvailable) (string, error) {
 	var name string
 	err = db.Get(&name, "SELECT relname FROM pg_catalog.pg_class WHERE oid = $1", oidAvailable.RELID)
 	if err != nil {
-		name = fmt.Sprintf("not-found-%d", oidAvailable.RELID)
+		name = "<pending>"
+		log.Printf("Failed to get name for %s: %d", oidAvailable.DATNAME, oidAvailable.RELID)
 	}
 	p.MetaNames[key] = name
 	return name, nil
@@ -247,9 +249,7 @@ func (p *Pgsp) ConnectionCount() int {
 
 func buildQuery(tableName string, columns []string) string {
 	buff := new(bytes.Buffer)
-	buff.WriteString("SELECT ")
-	buff.WriteString(strings.Join(columns, ", "))
-	buff.WriteString(" FROM ")
+	buff.WriteString("SELECT * FROM ")
 	buff.WriteString(tableName)
 	return buff.String()
 }

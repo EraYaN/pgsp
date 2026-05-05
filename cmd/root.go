@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -24,7 +24,6 @@ var (
 
 type Config struct {
 	DSN             string  `yaml:"dsn"`
-	ResolveNames    bool    `yaml:"ResolveNames"`
 	AfterCompletion int     `yaml:"AfterCompletion"`
 	Interval        float64 `yaml:"Interval"`
 	FullScreen      bool    `yaml:"FullScreen"`
@@ -65,10 +64,10 @@ func Progress(targets []string) {
 		}
 		defer f.Close()
 	} else {
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 	}
 
-	monitor, err := pgsp.New(config.DSN, config.ResolveNames)
+	monitor, err := pgsp.New(config.DSN)
 	if err != nil {
 		log.Println(err)
 		return
@@ -123,10 +122,6 @@ func init() {
 	var dsn string
 	rootCmd.PersistentFlags().StringVar(&dsn, "dsn", "", "PostgreSQL data source name")
 	_ = viper.BindPFlag("dsn", rootCmd.PersistentFlags().Lookup("dsn"))
-
-	var resolveNames bool
-	rootCmd.PersistentFlags().BoolVar(&resolveNames, "resolve-names", false, "Resolve names in the results, requires the DSN to be trivially parsable and the user to have access to all databases.")
-	_ = viper.BindPFlag("ResolveNames", rootCmd.PersistentFlags().Lookup("resolve-names"))
 
 	var afterCompletion int
 	rootCmd.PersistentFlags().IntVarP(&afterCompletion, "AfterCompletion", "a", 10, "Time to display after completion(Seconds)")

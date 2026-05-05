@@ -1,15 +1,12 @@
 package pgsp
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"image/color"
+	"text/template"
 
-	"github.com/EraYaN/pgsp/str"
 	_ "github.com/lib/pq"
-
-	"github.com/olekukonko/tablewriter"
 )
 
 // pg_stat_progress_analyze.
@@ -99,16 +96,9 @@ func (v Analyze) Pid() int {
 func (v Analyze) Color() (color.Color, color.Color) {
 	return color.RGBA{R: 255, G: 124, B: 203}, color.RGBA{R: 253, G: 255, B: 140}
 }
-func (v Analyze) Display() string {
-	value := str.ToStrStruct(v)
-	buff := new(bytes.Buffer)
 
-	t := tablewriter.NewWriter(buff)
-	t.Header(AnalyzeHeaders)
-	t.Append(value)
-	t.Render()
-
-	return buff.String()
+func (v Analyze) Template() *template.Template {
+	return AnalyzeTemplate
 }
 
 func (v Analyze) Progress() float64 {

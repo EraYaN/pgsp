@@ -1,14 +1,12 @@
 package pgsp
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"image/color"
+	"text/template"
 
-	"github.com/EraYaN/pgsp/str"
 	_ "github.com/lib/pq"
-	"github.com/olekukonko/tablewriter"
 )
 
 // pg_stat_progress_basebackup.
@@ -73,14 +71,8 @@ func (v BaseBackup) Color() (color.Color, color.Color) {
 	return color.RGBA{R: 253, G: 255, B: 140}, color.RGBA{R: 255, G: 124, B: 203}
 }
 
-func (v BaseBackup) Display() string {
-	buff := new(bytes.Buffer)
-	t := tablewriter.NewWriter(buff)
-	t.Header(BaseBackupHeaders)
-	t.Append(str.ToStrStruct(v))
-	t.Render()
-
-	return buff.String()
+func (v BaseBackup) Template() *template.Template {
+	return BaseBackupTemplate
 }
 
 func (v BaseBackup) Progress() float64 {

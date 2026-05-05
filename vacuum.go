@@ -1,14 +1,12 @@
 package pgsp
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"image/color"
+	"text/template"
 
-	"github.com/EraYaN/pgsp/str"
 	_ "github.com/lib/pq"
-	"github.com/olekukonko/tablewriter"
 )
 
 // pg_stat_progress_vacuum
@@ -97,14 +95,9 @@ func (v Vacuum) Color() (color.Color, color.Color) {
 	return color.RGBA{R: 90, G: 86, B: 224}, color.RGBA{R: 255, G: 124, B: 203}
 }
 
-func (v Vacuum) Display() string {
-	value := str.ToStrStruct(v)
-	buff := new(bytes.Buffer)
-	t := tablewriter.NewWriter(buff)
-	t.Header(VacuumHeaders)
-	t.Append(value)
-	t.Render()
-	return buff.String()
+func (v Vacuum) Template() *template.Template {
+
+	return VacuumTemplate
 }
 
 func (v Vacuum) Progress() float64 {

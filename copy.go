@@ -1,14 +1,12 @@
 package pgsp
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"image/color"
+	"text/template"
 
-	"github.com/EraYaN/pgsp/str"
 	_ "github.com/lib/pq"
-	"github.com/olekukonko/tablewriter"
 )
 
 // pg_stat_progress_copy
@@ -75,7 +73,12 @@ func selectCopy(ctx context.Context, pgsp *Pgsp, query string) ([]Progress, erro
 }
 
 func (v Copy) Header() string {
-	return fmt.Sprintf("%s: %s, %s", CopyTableName, v.DATNAME, v.RELNAME)
+	if v.RELID != 0 && v.RELNAME != "" {
+		return fmt.Sprintf("%s: %s, %s", CopyTableName, v.DATNAME, v.RELNAME)
+	} else if v.RELID != 0 && v.RELNAME == "" {
+		return fmt.Sprintf("%s: %s, query", CopyTableName, v.DATNAME)
+	}
+	return fmt.Sprintf("%s: %s", CopyTableName, v.DATNAME)
 }
 
 func (v Copy) Pid() int {
@@ -86,14 +89,9 @@ func (v Copy) Color() (color.Color, color.Color) {
 	return color.RGBA{R: 90, G: 246, B: 255}, color.RGBA{R: 124, G: 255, B: 203}
 }
 
-func (v Copy) Display() string {
-	value := str.ToStrStruct(v)
-	buff := new(bytes.Buffer)
-	t := tablewriter.NewWriter(buff)
-	t.Header(CopyHeaders)
-	t.Append(value)
-	t.Render()
-	return buff.String()
+func (v Copy) Template() *template.Template {
+
+	return CopyTemplate
 }
 
 func (v Copy) Progress() float64 {

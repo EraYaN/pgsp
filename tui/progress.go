@@ -1,9 +1,11 @@
 package tui
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"charm.land/bubbles/v2/progress"
@@ -60,12 +62,6 @@ var (
 			Bold(true).
 			Foreground(lipgloss.Color("#FAFAFA")).
 			Background(lipgloss.Color("#7D56F4"))
-	}()
-
-	infoStyle = func() lipgloss.Style {
-		b := lipgloss.RoundedBorder()
-		b.Left = "┤"
-		return titleStyle.BorderStyle(b)
 	}()
 )
 
@@ -201,7 +197,12 @@ func (m *Model) progressView() string {
 			continue
 		}
 		s += headerStyle.Render(pgrs.v.Header()) + "\n"
-		s += pgrs.v.Display()
+		var doc bytes.Buffer
+		err := pgrs.v.Template().Execute(&doc, pgrs.v)
+		if err != nil {
+			log.Printf("Error executing template: %v\n", err)
+		}
+		s += strings.TrimSpace(doc.String())
 		p := pgrs.v.Progress()
 		if p > 0 && p <= 1 {
 			if time.Since(pgrs.time) > time.Second*1 {
@@ -211,7 +212,7 @@ func (m *Model) progressView() string {
 			} else {
 				s += "\n" + pgrs.p.ViewAs(p)
 			}
-			s += "\n"
+			s += "\n\n"
 		}
 	}
 	return s
