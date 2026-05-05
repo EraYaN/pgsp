@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -23,6 +24,7 @@ var (
 
 type Config struct {
 	DSN             string  `yaml:"dsn"`
+	ResolveNames    bool    `yaml:"ResolveNames"`
 	AfterCompletion int     `yaml:"AfterCompletion"`
 	Interval        float64 `yaml:"Interval"`
 	FullScreen      bool    `yaml:"FullScreen"`
@@ -62,15 +64,17 @@ func Progress(targets []string) {
 			os.Exit(1)
 		}
 		defer f.Close()
+	} else {
+		log.SetOutput(ioutil.Discard)
 	}
 
-	monitor, err := pgsp.New(config.DSN)
+	monitor, err := pgsp.New(config.DSN, config.ResolveNames)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	defer func() {
-		if err := monitor.DisConnect(); err != nil {
+		if err := monitor.Disconnect(); err != nil {
 			log.Println(err)
 		}
 	}()
@@ -79,8 +83,8 @@ func Progress(targets []string) {
 	model := tui.NewModel(monitor, config.FullScreen)
 
 	p := tui.NewProgram(model)
-	tui.DebugLog("Start")
-	defer tui.DebugLog("End")
+	log.Print("Start")
+	defer log.Print("End")
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("there's been an error: %v", err)
 		return
@@ -119,6 +123,10 @@ func init() {
 	var dsn string
 	rootCmd.PersistentFlags().StringVar(&dsn, "dsn", "", "PostgreSQL data source name")
 	_ = viper.BindPFlag("dsn", rootCmd.PersistentFlags().Lookup("dsn"))
+
+	var resolveNames bool
+	rootCmd.PersistentFlags().BoolVar(&resolveNames, "resolve-names", false, "Resolve names in the results, requires the DSN to be trivially parsable and the user to have access to all databases.")
+	_ = viper.BindPFlag("ResolveNames", rootCmd.PersistentFlags().Lookup("resolve-names"))
 
 	var afterCompletion int
 	rootCmd.PersistentFlags().IntVarP(&afterCompletion, "AfterCompletion", "a", 10, "Time to display after completion(Seconds)")

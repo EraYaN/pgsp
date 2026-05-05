@@ -23,18 +23,6 @@ var Debug = false
 
 type tickMsg time.Time
 
-func DebugLogf(format string, v ...interface{}) {
-	if Debug {
-		log.Printf(format, v...)
-	}
-}
-
-func DebugLog(v ...interface{}) {
-	if Debug {
-		log.Print(v...)
-	}
-}
-
 func tickCmd() tea.Cmd {
 	return tea.Tick(UpdateInterval, func(t time.Time) tea.Msg {
 		return tickMsg(t)
@@ -92,7 +80,7 @@ func NewModel(monitor *pgsp.Pgsp, fullscreen bool) Model {
 		monitor:    monitor,
 		fullscreen: fullscreen,
 	}
-	DebugLogf("NewModel: %v, %p", model, &model)
+	log.Printf("NewModel: %v, %p", model, &model)
 	return model
 }
 
@@ -128,7 +116,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
-		DebugLogf("WindowSizeMsg: width=%d, height=%d", msg.Width, msg.Height)
+		log.Printf("WindowSizeMsg: width=%d, height=%d", msg.Width, msg.Height)
 		m.height = msg.Height
 		m.width = msg.Width
 		headerHeight := lipgloss.Height(m.headerView())
@@ -170,7 +158,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	if m.ready {
 		// Handle keyboard and mouse events in the viewport
-		DebugLogf("Update viewport with msg: %T and content length: %d, %p", msg, len(m.content), &m)
 		m.viewport.SetContent(m.content)
 		m.viewport, cmd = m.viewport.Update(msg)
 		cmds = append(cmds, cmd)
@@ -213,8 +200,8 @@ func (m *Model) progressView() string {
 		if pgrs.p == nil {
 			continue
 		}
-		s += headerStyle.Render(pgrs.v.Name()) + "\n"
-		s += pgrs.v.Table()
+		s += headerStyle.Render(pgrs.v.Header()) + "\n"
+		s += pgrs.v.Display()
 		p := pgrs.v.Progress()
 		if p > 0 && p <= 1 {
 			if time.Since(pgrs.time) > time.Second*1 {
@@ -227,18 +214,17 @@ func (m *Model) progressView() string {
 			s += "\n"
 		}
 	}
-	DebugLogf("Set content with length: %d, %p", len(s), &m)
 	return s
 }
 
 func (m *Model) updateProgress(ctx context.Context) error {
-	m.status = fmt.Sprintf("Monitor: %s\n", m.monitor.TargetString())
+	m.status = fmt.Sprintf("Monitor: %s, Connections: %d\n", m.monitor.TargetString(), m.monitor.ConnectionCount())
 
 	for _, table := range m.monitor.StatProgress {
-		result, err := table.Get(ctx, m.monitor.DB)
+		result, err := table.Get(ctx, m.monitor)
 		if err != nil {
 			table.Enable = false
-			DebugLog(err)
+			log.Print(err)
 			m.status += err.Error() + "\n"
 		}
 		for _, v := range result {
@@ -258,7 +244,7 @@ func (m *Model) updateProgress(ctx context.Context) error {
 
 func (m Model) addProgress(pgrss []pgrs, v pgsp.Progress) []pgrs {
 	for n, pgr := range pgrss {
-		if pgr.v.Name() == v.Name() && pgr.v.Pid() == v.Pid() {
+		if pgr.v.Header() == v.Header() && pgr.v.Pid() == v.Pid() {
 			pgrss[n].v = v
 			pgrss[n].time = time.Now()
 			return pgrss

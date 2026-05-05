@@ -6,9 +6,8 @@ import (
 	"database/sql"
 	"image/color"
 
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
 	"github.com/EraYaN/pgsp/str"
+	_ "github.com/lib/pq"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -26,19 +25,24 @@ var (
 	BaseBackupTableName = "pg_stat_progress_basebackup"
 	BaseBackupQuery     string
 	BaseBackupColumns   []string
+	BaseBackupHeaders   []string
 )
 
-func GetBaseBackup(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
+func GetBaseBackup(ctx context.Context, pgsp *Pgsp) ([]Progress, error) {
 	if len(BaseBackupColumns) == 0 {
-		BaseBackupColumns = getColumns(BaseBackup{})
+		BaseBackupColumns = getColumns(BaseBackup{}, true)
+	}
+	if len(BaseBackupHeaders) == 0 {
+		BaseBackupHeaders = getColumns(BaseBackup{}, false)
 	}
 	if BaseBackupQuery == "" {
 		BaseBackupQuery = buildQuery(BaseBackupTableName, BaseBackupColumns)
 	}
-	return selectBaseBackup(ctx, db, BaseBackupQuery)
+	return selectBaseBackup(ctx, pgsp, BaseBackupQuery)
 }
 
-func selectBaseBackup(ctx context.Context, db *sqlx.DB, query string) ([]Progress, error) {
+func selectBaseBackup(ctx context.Context, pgsp *Pgsp, query string) ([]Progress, error) {
+	db := pgsp.DB
 	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -57,7 +61,7 @@ func selectBaseBackup(ctx context.Context, db *sqlx.DB, query string) ([]Progres
 	return as, rows.Err()
 }
 
-func (v BaseBackup) Name() string {
+func (v BaseBackup) Header() string {
 	return BaseBackupTableName
 }
 
@@ -69,10 +73,10 @@ func (v BaseBackup) Color() (color.Color, color.Color) {
 	return color.RGBA{R: 253, G: 255, B: 140}, color.RGBA{R: 255, G: 124, B: 203}
 }
 
-func (v BaseBackup) Table() string {
+func (v BaseBackup) Display() string {
 	buff := new(bytes.Buffer)
 	t := tablewriter.NewWriter(buff)
-	t.Header(BaseBackupColumns)
+	t.Header(BaseBackupHeaders)
 	t.Append(str.ToStrStruct(v))
 	t.Render()
 

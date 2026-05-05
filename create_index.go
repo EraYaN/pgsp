@@ -3,11 +3,11 @@ package pgsp
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"image/color"
 
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
 	"github.com/EraYaN/pgsp/str"
+	_ "github.com/lib/pq"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -29,6 +29,8 @@ type CreateIndex struct {
 	TuplesDone      int64  `db:"tuples_done"`
 	PartitionsTotal int64  `db:"partitions_total"`
 	PartitionsDone  int64  `db:"partitions_done"`
+	RELNAME         string
+	IndexRelname    string
 }
 
 var CreateIndexTableName = "pg_stat_progress_create_index"
@@ -36,19 +38,24 @@ var CreateIndexTableName = "pg_stat_progress_create_index"
 var (
 	CreateIndexQuery   string
 	CreateIndexColumns []string
+	CreateIndexHeaders []string
 )
 
-func GetCreateIndex(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
+func GetCreateIndex(ctx context.Context, pgsp *Pgsp) ([]Progress, error) {
 	if len(CreateIndexColumns) == 0 {
-		CreateIndexColumns = getColumns(CreateIndex{})
+		CreateIndexColumns = getColumns(CreateIndex{}, true)
+	}
+	if len(CreateIndexHeaders) == 0 {
+		CreateIndexHeaders = getColumns(CreateIndex{}, false)
 	}
 	if CreateIndexQuery == "" {
 		CreateIndexQuery = buildQuery(CreateIndexTableName, CreateIndexColumns)
 	}
-	return selectCreateIndex(ctx, db, CreateIndexQuery)
+	return selectCreateIndex(ctx, pgsp, CreateIndexQuery)
 }
 
-func selectCreateIndex(ctx context.Context, db *sqlx.DB, query string) ([]Progress, error) {
+func selectCreateIndex(ctx context.Context, pgsp *Pgsp, query string) ([]Progress, error) {
+	db := pgsp.DB
 	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -62,13 +69,30 @@ func selectCreateIndex(ctx context.Context, db *sqlx.DB, query string) ([]Progre
 		if err != nil {
 			return nil, err
 		}
+		row.RELNAME, err = pgsp.GetItemName(OidAvailable{
+			RELID:   row.RELID,
+			DATNAME: row.DATNAME,
+		})
+		if err != nil {
+			return nil, err
+		}
+		row.IndexRelname, err = pgsp.GetItemName(OidAvailable{
+			RELID:   row.IndexRelid,
+			DATNAME: row.DATNAME,
+		})
+		if err != nil {
+			return nil, err
+		}
 		as = append(as, row)
 	}
 	return as, rows.Err()
 }
 
-func (v CreateIndex) Name() string {
-	return CreateIndexTableName
+func (v CreateIndex) Header() string {
+	if v.IndexRelid != 0 {
+		return fmt.Sprintf("%s: %s, %s, %s", CreateIndexTableName, v.DATNAME, v.RELNAME, v.IndexRelname)
+	}
+	return fmt.Sprintf("%s: %s, %s", CreateIndexTableName, v.DATNAME, v.RELNAME)
 }
 
 func (v CreateIndex) Pid() int {
@@ -79,12 +103,12 @@ func (v CreateIndex) Color() (color.Color, color.Color) {
 	return color.RGBA{R: 238, G: 111, B: 248}, color.RGBA{R: 90, G: 86, B: 224}
 }
 
-func (v CreateIndex) Table() string {
+func (v CreateIndex) Display() string {
 	value := str.ToStrStruct(v)
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)
-	t.Header(CreateIndexColumns)
+	t.Header(CreateIndexHeaders)
 	t.Append(value)
 	t.Render()
 
