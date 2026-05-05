@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/noborus/pgsp"
-	"github.com/noborus/pgsp/str"
+	"github.com/EraYaN/pgsp"
+	"github.com/EraYaN/pgsp/str"
 )
 
 func TestToStrStruct(t *testing.T) {

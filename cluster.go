@@ -7,7 +7,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"github.com/noborus/pgsp/str"
+	"github.com/EraYaN/pgsp/str"
 
 	"github.com/olekukonko/tablewriter"
 )

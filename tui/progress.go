@@ -10,7 +10,7 @@ import (
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/noborus/pgsp"
+	"github.com/EraYaN/pgsp"
 )
 
 var (

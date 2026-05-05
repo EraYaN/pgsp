@@ -7,8 +7,8 @@ builds:
     main: ./cmd/pgsp
     binary: pgsp
     ldflags:
-      - -X github.com/noborus/pgsp/cmd.Version={{.Version}}
-      - -X github.com/noborus/pgsp/cmd.Revision={{.ShortCommit}}
+      - -X github.com/EraYaN/pgsp/cmd.Version={{.Version}}
+      - -X github.com/EraYaN/pgsp/cmd.Revision={{.ShortCommit}}
     env:
       - CGO_ENABLED=0
     goos:
@@ -22,8 +22,8 @@ builds:
     main: ./cmd/pgsp
     binary: pgsp
     ldflags:
-      - -X github.com/noborus/pgsp/cmd.Version={{.Version}}
-      - -X github.com/noborus/pgsp/cmd.Revision={{.ShortCommit}}
+      - -X github.com/EraYaN/pgsp/cmd.Version={{.Version}}
+      - -X github.com/EraYaN/pgsp/cmd.Revision={{.ShortCommit}}
     env:
       - CGO_ENABLED=0
     goos:
@@ -51,8 +51,8 @@ nfpms:
     file_name_template: "{{ .ProjectName }}_{{ .Version }}-1_{{ .Arch }}"
     builds:
     - pgsp-linux
-    homepage: https://github.com/noborus/pgsp
-    maintainer: Noboru Saito <noborusai@gmail.com>
+    homepage: https://github.com/EraYaN/pgsp
+    maintainer: Erwin de Haan <git@erayan.com>
     description: PostgreSQL Stat Progress CLI Monitor
     license: MIT
     formats:
@@ -61,19 +61,19 @@ nfpms:
     bindir: /usr/bin
     epoch: 1
 
-brews:
-  -
-    name: pgsp
-    repository:
-      owner: noborus
-      name: homebrew-tap
-      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-    commit_author:
-      name: noborus
-      email: noborusai@gmail.com
-    homepage: https://github.com/noborus/pgsp
-    description: "PostgreSQL Stat Progress CLI Monitor"
-    test:
-      system "#{bin}/pgsp --version"
-    install:
-      bin.install "pgsp"
+# brews:
+#   -
+#     name: pgsp
+#     repository:
+#       owner: erayan
+#       name: homebrew-tap
+#       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+#     commit_author:
+#       name: erayan
+#       email: git@erayan.com
+#     homepage: https://github.com/EraYaN/pgsp
+#     description: "PostgreSQL Stat Progress CLI Monitor"
+#     test:
+#       system "#{bin}/pgsp --version"
+#     install:
+#       bin.install "pgsp"

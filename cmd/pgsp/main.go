@@ -1,6 +1,6 @@
 package main
 
-import "github.com/noborus/pgsp/cmd"
+import "github.com/EraYaN/pgsp/cmd"
 
 func main() {
 	cmd.Execute()

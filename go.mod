@@ -1,4 +1,4 @@
-module github.com/noborus/pgsp
+module github.com/EraYaN/pgsp
 
 go 1.25.0
 

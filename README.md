@@ -1,13 +1,15 @@
 # pgsp - PostgreSQL Stat Progress CLI Monitor
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/noborus/pgsp.svg)](https://pkg.go.dev/github.com/noborus/pgsp)
+> **⚠️ This repository is a fork of [noborus/pgsp](https://github.com/noborus/pgsp).**
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/EraYaN/pgsp.svg)](https://pkg.go.dev/github.com/EraYaN/pgsp)
 
 A CUI tool that monitors PostgreSQL's pg_stat_progress*.
 
 Supported progress reports are ANALYZE, CLUSTER, CREATE INDEX, VACUUM, COPY, and BASE_BACKUP.
 See [Progress Reporting](https://www.postgresql.org/docs/current/progress-reporting.html) for more information.
 
-![pgsp.png](https://raw.githubusercontent.com/noborus/pgsp/master/docs/pgsp.png)
+![pgsp.png](https://raw.githubusercontent.com/EraYaN/pgsp/master/docs/pgsp.png)
 
 ## Requires
 
@@ -17,12 +19,12 @@ go 1.18 or later
 
 ### Download binary
 
-[releases page](https://github.com/noborus/pgsp/releases/).
+[releases page](https://github.com/EraYaN/pgsp/releases/).
 
 ### Go install
 
 ```console
-go install github.com/noborus/pgsp/cmd/pgsp@latest
+go install github.com/EraYaN/pgsp/cmd/pgsp@latest
 ```
 
 ## Usage

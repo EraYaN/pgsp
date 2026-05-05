@@ -9,8 +9,8 @@ import (
 	tea "charm.land/bubbletea/v2"
 	_ "github.com/lib/pq"
 
-	"github.com/noborus/pgsp"
-	"github.com/noborus/pgsp/tui"
+	"github.com/EraYaN/pgsp"
+	"github.com/EraYaN/pgsp/tui"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
