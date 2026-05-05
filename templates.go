@@ -31,16 +31,15 @@ Delay time: {{printf "%.2f" .DelayTime}}s
 {{end -}}`))
 
 	BaseBackupTemplate = template.Must(template.New("baseBackup").Funcs(FuncMap).Parse(`Phase: {{.PHASE | BoldStyle}}; PID: {{.PID}}
-Heap Tuples Scanned: {{.HeapTuplesScanned}}; Written: {{.HeapTuplesWritten}}
 {{ if .BackupTotal -}}
-Backup: {{.BackupStreamed}}/{{.BackupTotal}} ({{percent .BackupStreamed .BackupTotal}})
+Backup: {{.BackupStreamed}}/{{.BackupTotal}}
 {{end -}}
 {{- if .TablespacesTotal -}}
 Tablespaces: {{.TablespacesStreamed}}/{{.TablespacesTotal}} ({{percent .TablespacesStreamed .TablespacesTotal}})
 {{end -}}`))
 
 	ClusterTemplate = template.Must(template.New("cluster").Funcs(FuncMap).Parse(`Command: {{.Command | BoldStyle}}; Phase: {{.PHASE | BoldStyle}}; PID: {{.PID}}; RELID: {{.RELID}}; {{if .ClusterIndexRelid }}{{.ClusterIndexRelid}}{{end}}
-{{ if .HeapTuplesScanned}}
+{{ if .HeapTuplesScanned -}}
 Heap Tuples Scanned: {{.HeapTuplesScanned}}; Written: {{.HeapTuplesWritten}}
 {{end -}}
 {{- if .HeapBlksTotal -}}
@@ -48,12 +47,6 @@ Heap Blocks: {{.HeapBlksScanned}}/{{.HeapBlksTotal}} ({{percent .HeapBlksScanned
 {{end -}}
 {{- if .IndexRebuildCount -}}
 Index Rebuild Count: {{.IndexRebuildCount}}
-{{end -}}
-{{- if .ChildTablesTotal -}}
-Child tables: {{.ChildTablesDone}}/{{.ChildTablesTotal}} ({{percent .ChildTablesDone .ChildTablesTotal}})
-{{end -}}
-{{- if .DelayTime -}}
-Delay time: {{printf "%.2f" .DelayTime}}s
 {{end -}}`))
 
 	CopyTemplate = template.Must(template.New("copy").Funcs(FuncMap).Parse(`Command: {{.COMMAND | BoldStyle}}; Type: {{.CTYPE | BoldStyle}}; PID: {{.PID}}; RELID: {{.RELID}};
