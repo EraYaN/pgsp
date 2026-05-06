@@ -1,14 +1,12 @@
 package pgsp
 
 import (
-	"bytes"
 	"context"
+	"fmt"
+	"image/color"
+	"text/template"
 
-	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"github.com/noborus/pgsp/str"
-	"github.com/noborus/pgsp/vertical"
-	"github.com/olekukonko/tablewriter"
 )
 
 // pg_stat_progress_copy
@@ -23,25 +21,32 @@ type Copy struct {
 	BYTESTotal      int64  `db:"bytes_total"`
 	TUPLESProcessed int64  `db:"tuples_processed"`
 	TUPLESExcluded  int64  `db:"tuples_excluded"`
+	TUPLESSkipped   int64  `db:"tuples_skipped"`
+	RELNAME         string
 }
 
 var (
 	CopyTableName = "pg_stat_progress_copy"
 	CopyQuery     string
 	CopyColumns   []string
+	CopyHeaders   []string
 )
 
-func GetCopy(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
+func GetCopy(ctx context.Context, pgsp *Pgsp) ([]Progress, error) {
 	if len(CopyColumns) == 0 {
-		CopyColumns = getColumns(Copy{})
+		CopyColumns = getColumns(Copy{}, true)
+	}
+	if len(CopyHeaders) == 0 {
+		CopyHeaders = getColumns(Copy{}, false)
 	}
 	if CopyQuery == "" {
 		CopyQuery = buildQuery(CopyTableName, CopyColumns)
 	}
-	return selectCopy(ctx, db, CopyQuery)
+	return selectCopy(ctx, pgsp, CopyQuery)
 }
 
-func selectCopy(ctx context.Context, db *sqlx.DB, query string) ([]Progress, error) {
+func selectCopy(ctx context.Context, pgsp *Pgsp, query string) ([]Progress, error) {
+	db := pgsp.DB
 	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -55,45 +60,38 @@ func selectCopy(ctx context.Context, db *sqlx.DB, query string) ([]Progress, err
 		if err != nil {
 			return nil, err
 		}
+		row.RELNAME, err = pgsp.GetItemName(OidAvailable{
+			RELID:   row.RELID,
+			DATNAME: row.DATNAME,
+		})
+		if err != nil {
+			return nil, err
+		}
 		as = append(as, row)
 	}
 	return as, nil
 }
 
-func (v Copy) Name() string {
-	return CopyTableName
+func (v Copy) Header() string {
+	if v.RELID != 0 && v.RELNAME != "" {
+		return fmt.Sprintf("%s: %s, %s", CopyTableName, v.DATNAME, v.RELNAME)
+	} else if v.RELID != 0 && v.RELNAME == "" {
+		return fmt.Sprintf("%s: %s, query", CopyTableName, v.DATNAME)
+	}
+	return fmt.Sprintf("%s: %s", CopyTableName, v.DATNAME)
 }
 
 func (v Copy) Pid() int {
 	return v.PID
 }
 
-func (v Copy) Color() (string, string) {
-	return "#5AF6FF", "#7CFFCB"
+func (v Copy) Color() (color.Color, color.Color) {
+	return color.RGBA{R: 90, G: 246, B: 255}, color.RGBA{R: 124, G: 255, B: 203}
 }
 
-func (v Copy) Table() string {
-	value := str.ToStrStruct(v)
-	buff := new(bytes.Buffer)
-	t := tablewriter.NewWriter(buff)
-	t.SetHeader(CopyColumns[0:7])
-	t.Append(value[0:7])
-	t.Render()
+func (v Copy) Template() *template.Template {
 
-	t2 := tablewriter.NewWriter(buff)
-	t2.SetHeader(CopyColumns[7:])
-	t2.Append(value[7:])
-	t2.Render()
-	return buff.String()
-}
-
-func (v Copy) Vertical() string {
-	buff := new(bytes.Buffer)
-	vt := vertical.NewWriter(buff)
-	vt.SetHeader(CopyColumns)
-	vt.AppendStruct(v)
-	vt.Render()
-	return buff.String()
+	return CopyTemplate
 }
 
 func (v Copy) Progress() float64 {

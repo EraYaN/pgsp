@@ -2,15 +2,16 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	_ "github.com/lib/pq"
 
-	"github.com/noborus/pgsp"
-	"github.com/noborus/pgsp/tui"
+	"github.com/EraYaN/pgsp"
+	"github.com/EraYaN/pgsp/tui"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -62,6 +63,8 @@ func Progress(targets []string) {
 			os.Exit(1)
 		}
 		defer f.Close()
+	} else {
+		log.SetOutput(io.Discard)
 	}
 
 	monitor, err := pgsp.New(config.DSN)
@@ -70,18 +73,18 @@ func Progress(targets []string) {
 		return
 	}
 	defer func() {
-		if err := monitor.DisConnect(); err != nil {
+		if err := monitor.Disconnect(); err != nil {
 			log.Println(err)
 		}
 	}()
 
 	monitor.Targets(targets)
-	model := tui.NewModel(monitor)
+	model := tui.NewModel(monitor, config.FullScreen)
 
-	p := tui.NewProgram(model, config.FullScreen)
-	tui.DebugLog("Start")
-	defer tui.DebugLog("End")
-	if err := p.Start(); err != nil {
+	p := tui.NewProgram(model)
+	log.Print("Start")
+	defer log.Print("End")
+	if _, err := p.Run(); err != nil {
 		fmt.Printf("there's been an error: %v", err)
 		return
 	}

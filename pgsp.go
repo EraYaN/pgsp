@@ -3,11 +3,18 @@ package pgsp
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"image/color"
+	"log"
+	"net/netip"
 	"reflect"
 	"sort"
 	"strings"
+	"text/template"
+	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
@@ -24,22 +31,33 @@ const (
 
 type SPTable struct {
 	Enable bool
-	Get    func(ctx context.Context, db *sqlx.DB) ([]Progress, error)
+	Get    func(ctx context.Context, pgsp *Pgsp) ([]Progress, error)
 }
 
 type StatProgress map[SPTaget]*SPTable
 
 type Pgsp struct {
 	DB           *sqlx.DB
+	MetaDBs      map[string]*sqlx.DB
+	MetaNames    map[string]string
+	BaseConfig   *pq.Config
 	StatProgress StatProgress
 }
 
+type OidAvailable struct {
+	RELID   int
+	DATNAME string
+}
+
+func (o *OidAvailable) Key() string {
+	return fmt.Sprintf("%s.%d", o.DATNAME, o.RELID)
+}
+
 type Progress interface {
-	Name() string
+	Header() string
 	Pid() int
-	Color() (string, string)
-	Table() string
-	Vertical() string
+	Color() (color.Color, color.Color)
+	Template() *template.Template
 	Progress() float64
 }
 
@@ -48,9 +66,21 @@ func New(dsn string) (*Pgsp, error) {
 	if err != nil {
 		return nil, err
 	}
+	var baseConfig *pq.Config
+
+	config, err := pq.NewConfig(dsn)
+	if err != nil {
+		return nil, err
+	}
+	config.Database = "postgres"
+	baseConfig = &config
+
 	monitor := NewMonitor()
 	return &Pgsp{
 		DB:           db,
+		BaseConfig:   baseConfig,
+		MetaDBs:      make(map[string]*sqlx.DB),
+		MetaNames:    make(map[string]string),
 		StatProgress: monitor,
 	}, nil
 }
@@ -78,6 +108,39 @@ func NewMonitor() StatProgress {
 	}
 }
 
+func getDSN(config *pq.Config) string {
+	dsn := ""
+	t := reflect.TypeOf(*config)
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		j := field.Tag.Get("postgres")
+		if j == "" || j == "-" {
+			continue
+		}
+		value := reflect.ValueOf(*config).Field(i).Interface()
+		if value == nil {
+			continue
+		}
+		valueAddr, ok := value.(netip.Addr)
+		if ok && !valueAddr.IsValid() {
+			continue
+		}
+
+		valueStr := ""
+		valueTime, ok := value.(time.Duration)
+		if ok && valueTime.Seconds() < 0.0001 {
+			valueStr = "0"
+		} else {
+			valueStr = fmt.Sprintf("%v", value)
+		}
+		if valueStr == "" {
+			continue
+		}
+		dsn += fmt.Sprintf("%s='%s' ", j, valueStr)
+	}
+	return dsn
+}
+
 func Connect(dsn string) (*sqlx.DB, error) {
 	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
@@ -89,8 +152,63 @@ func Connect(dsn string) (*sqlx.DB, error) {
 	return db, nil
 }
 
-func (p *Pgsp) DisConnect() error {
-	return p.DB.Close()
+func (p *Pgsp) ConnectForDatabase(database string) (*sqlx.DB, error) {
+	if db, ok := p.MetaDBs[database]; ok {
+		return db, nil
+	}
+
+	if p.BaseConfig == nil {
+		return nil, fmt.Errorf("base config is not set")
+	}
+	config := (*p.BaseConfig).Clone()
+	config.Database = database
+	db, err := sqlx.Connect("postgres", getDSN(&config))
+	if err != nil {
+		return nil, err
+	}
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+	p.MetaDBs[database] = db
+	return db, nil
+}
+
+func (p *Pgsp) GetItemName(oidAvailable OidAvailable) (string, error) {
+	if p.BaseConfig == nil {
+		return "", fmt.Errorf("base config is not set")
+	}
+	key := oidAvailable.Key()
+	if name, ok := p.MetaNames[key]; ok && name != "" && name != "<pending>" {
+		return name, nil
+	}
+	if oidAvailable.RELID == 0 {
+		return "", nil
+	}
+	db, err := p.ConnectForDatabase(oidAvailable.DATNAME)
+	if err != nil {
+		return "", err
+	}
+	var name string
+	err = db.Get(&name, "SELECT relname FROM pg_catalog.pg_class WHERE oid = $1", oidAvailable.RELID)
+	if err != nil {
+		name = "<pending>"
+		log.Printf("Failed to get name for %s: %d", oidAvailable.DATNAME, oidAvailable.RELID)
+	}
+	p.MetaNames[key] = name
+	return name, nil
+}
+
+func (p *Pgsp) Disconnect() []error {
+	errors := make([]error, 0)
+	for _, db := range p.MetaDBs {
+		if err := db.Close(); err != nil {
+			errors = append(errors, err)
+		}
+	}
+	if err := p.DB.Close(); err != nil {
+		errors = append(errors, err)
+	}
+	return errors
 }
 
 func (p *Pgsp) Targets(target []string) {
@@ -125,21 +243,29 @@ func (p *Pgsp) TargetString() string {
 	return strings.Join(ms, " ")
 }
 
+func (p *Pgsp) ConnectionCount() int {
+	return len(p.MetaDBs) + 1
+}
+
 func buildQuery(tableName string, columns []string) string {
 	buff := new(bytes.Buffer)
-	buff.WriteString("SELECT ")
-	buff.WriteString(strings.Join(columns, ", "))
-	buff.WriteString(" FROM ")
+	buff.WriteString("SELECT * FROM ")
 	buff.WriteString(tableName)
 	return buff.String()
 }
 
-func getColumns(s interface{}) []string {
+func getColumns(s interface{}, db_only bool) []string {
 	t := reflect.TypeOf(s)
 	var columns []string
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		j := field.Tag.Get("db")
+		if j == "" {
+			if db_only {
+				continue
+			}
+			j = field.Name
+		}
 		columns = append(columns, j)
 	}
 	return columns

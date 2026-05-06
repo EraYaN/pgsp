@@ -1,7 +1,7 @@
 BINARY_NAME := pgsp
-TARGET_NAME := github.com/noborus/pgsp/cmd/pgsp
+TARGET_NAME := github.com/EraYaN/pgsp/cmd/pgsp
 SRCS := $(shell git ls-files '*.go')
-LDFLAGS := "-X github.com/noborus/pgsp/cmd.Version=$(shell git describe --tags --abbrev=0 --always) -X github.com/noborus/pgsp/cmd.Revision=$(shell git rev-parse --verify --short HEAD)"
+LDFLAGS := "-X github.com/EraYaN/pgsp/cmd.Version=$(shell git describe --tags --abbrev=0 --always) -X github.com/EraYaN/pgsp/cmd.Revision=$(shell git rev-parse --verify --short HEAD)"
 
 all: build
 
