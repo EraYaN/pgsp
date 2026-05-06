@@ -1,3 +1,5 @@
+version: 2
+
 before:
   hooks:
     - go mod tidy
@@ -37,19 +39,19 @@ builds:
       - arm64
 
 archives:
-  -
-    id: pgsp-archives
+  - id: pgsp-archives
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    builds:
+    ids:
     - pgsp-linux
     - pgsp-other
-    format: zip
+    formats: 
+    - zip
 
 nfpms:
   -
     id: pgsp-nfpms
     file_name_template: "{{ .ProjectName }}_{{ .Version }}-1_{{ .Arch }}"
-    builds:
+    ids:
     - pgsp-linux
     homepage: https://github.com/EraYaN/pgsp
     maintainer: Erwin de Haan <git@erayan.com>
