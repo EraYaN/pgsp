@@ -212,8 +212,8 @@ func (m *Model) progressView() string {
 			} else {
 				s += "\n" + pgrs.p.ViewAs(p)
 			}
-			s += "\n\n"
 		}
+		s += "\n\n"
 	}
 	return s
 }
